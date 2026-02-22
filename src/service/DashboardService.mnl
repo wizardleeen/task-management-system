@@ -1,6 +1,14 @@
 package service
 
-import domain.*
+import domain.User
+import domain.Task
+import domain.Project
+import domain.TaskStatus
+import domain.ProjectStatus
+import domain.UserRole
+import value.DashboardStats
+import value.ProjectProgress
+import value.TeamStats
 
 @Bean
 class DashboardService {
@@ -9,13 +17,25 @@ class DashboardService {
         val myTasks = Task.assigneeIdx.getAll(user)
         val myProjects = Project.ownerIdx.getAll(user)
         
-        val todoTasks = myTasks.filter(t -> t.status == TaskStatus.TODO).size
-        val inProgressTasks = myTasks.filter(t -> t.status == TaskStatus.IN_PROGRESS).size
-        val completedTasks = myTasks.filter(t -> t.status == TaskStatus.COMPLETED).size
-        val overdueTasks = myTasks.filter(t -> t.isOverdue()).size
+        var todoTasks = 0
+        var inProgressTasks = 0
+        var completedTasks = 0
+        var overdueTasks = 0
         
-        val activeProjects = myProjects.filter(p -> p.status.isActive()).size
-        val completedProjects = myProjects.filter(p -> p.status == ProjectStatus.COMPLETED).size
+        for (t in myTasks) {
+            if (t.status == TaskStatus.TODO) todoTasks = todoTasks + 1
+            if (t.status == TaskStatus.IN_PROGRESS) inProgressTasks = inProgressTasks + 1
+            if (t.status == TaskStatus.COMPLETED) completedTasks = completedTasks + 1
+            if (t.isOverdue()) overdueTasks = overdueTasks + 1
+        }
+        
+        var activeProjects = 0
+        var completedProjects = 0
+        
+        for (p in myProjects) {
+            if (p.status.isActive()) activeProjects = activeProjects + 1
+            if (p.status == ProjectStatus.COMPLETED) completedProjects = completedProjects + 1
+        }
         
         return DashboardStats(
             todoTasks, inProgressTasks, completedTasks, overdueTasks,
@@ -33,11 +53,13 @@ class DashboardService {
         val myTasks = Task.assigneeIdx.getAll(user)
         val cutoffTime = now() + (days * 24 * 60 * 60 * 1000L)
         
-        return myTasks.filter(t -> 
-            t.dueDate != null && 
-            t.dueDate!! <= cutoffTime && 
-            !t.status.isCompleted()
-        )
+        val result = Task[0]
+        for (t in myTasks) {
+            if (t.dueDate != null && t.dueDate!! <= cutoffTime && !t.status.isCompleted()) {
+                result = result + t
+            }
+        }
+        return result
     }
     
     fn getProjectProgress(projectId: long) -> ProjectProgress? {
@@ -46,9 +68,16 @@ class DashboardService {
         
         val tasks = Task.projectIdx.getAll(project!!)
         val totalTasks = tasks.size
-        val completedTasks = tasks.filter(t -> t.status.isCompleted()).size
-        val inProgressTasks = tasks.filter(t -> t.status.isActive()).size
-        val todoTasks = tasks.filter(t -> t.status == TaskStatus.TODO).size
+        
+        var completedTasks = 0
+        var inProgressTasks = 0
+        var todoTasks = 0
+        
+        for (t in tasks) {
+            if (t.status.isCompleted()) completedTasks = completedTasks + 1
+            if (t.status.isActive()) inProgressTasks = inProgressTasks + 1
+            if (t.status == TaskStatus.TODO) todoTasks = todoTasks + 1
+        }
         
         val progressPercentage = if (totalTasks > 0) (completedTasks * 100 / totalTasks) else 0
         
@@ -65,12 +94,13 @@ class DashboardService {
         val allUsers = User.activeIdx.getAll(true)
         val allProjects = Project.statusIdx.getAll(ProjectStatus.ACTIVE)
         val allTasks = Task.statusIdx.getAll(TaskStatus.IN_PROGRESS)
+        val completedTasks = Task.statusIdx.getAll(TaskStatus.COMPLETED)
         
         return TeamStats(
             allUsers.size,
             allProjects.size,
             allTasks.size,
-            Task.statusIdx.getAll(TaskStatus.COMPLETED).size
+            completedTasks.size
         )
     }
     

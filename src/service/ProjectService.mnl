@@ -1,6 +1,10 @@
 package service
 
-import domain.*
+import domain.User
+import domain.Project
+import domain.ProjectStatus
+import domain.ProjectRole
+import domain.Priority
 
 @Bean
 class ProjectService {
@@ -93,7 +97,13 @@ class ProjectService {
     
     fn getOverdueProjects() -> Project[] {
         val allProjects = Project.statusIdx.getAll(ProjectStatus.ACTIVE)
-        return allProjects.filter(p -> p.isOverdue())
+        val result = Project[0]
+        for (p in allProjects) {
+            if (p.isOverdue()) {
+                result = result + p
+            }
+        }
+        return result
     }
     
     priv fn getProjectById(id: long) -> Project? {

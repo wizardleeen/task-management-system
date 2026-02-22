@@ -1,14 +1,22 @@
 package service
 
-import domain.*
+import domain.User
+import domain.Session
 
 @Bean
 class AuthService {
     
     fn login(username: string, password: string) -> Session? {
-        val user = User.usernameIdx.getFirst(username) ?: User.emailIdx.getFirst(username)
+        val user = User.usernameIdx.getFirst(username)
+        if (user == null) {
+            val emailUser = User.emailIdx.getFirst(username)
+            if (emailUser == null) {
+                return null
+            }
+            user = emailUser
+        }
         
-        if (user == null || !user!!.checkPassword(password) || !user!!.isActive) {
+        if (!user!!.checkPassword(password) || !user!!.isActive) {
             return null
         }
         

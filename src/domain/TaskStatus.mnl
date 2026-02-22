@@ -20,13 +20,25 @@ enum TaskStatus {
     fn canTransitionTo(newStatus: TaskStatus) -> bool {
         if (this == newStatus) return true
         
-        return when (this) {
-            TODO -> newStatus == IN_PROGRESS || newStatus == BLOCKED
-            IN_PROGRESS -> newStatus == IN_REVIEW || newStatus == COMPLETED || newStatus == BLOCKED
-            IN_REVIEW -> newStatus == TESTING || newStatus == IN_PROGRESS || newStatus == COMPLETED
-            TESTING -> newStatus == COMPLETED || newStatus == IN_PROGRESS
-            COMPLETED -> false  // 已完成的任务不能改变状态
-            BLOCKED -> newStatus == TODO || newStatus == IN_PROGRESS
+        if (this == TODO) {
+            return newStatus == IN_PROGRESS || newStatus == BLOCKED
         }
+        if (this == IN_PROGRESS) {
+            return newStatus == IN_REVIEW || newStatus == COMPLETED || newStatus == BLOCKED
+        }
+        if (this == IN_REVIEW) {
+            return newStatus == TESTING || newStatus == IN_PROGRESS || newStatus == COMPLETED
+        }
+        if (this == TESTING) {
+            return newStatus == COMPLETED || newStatus == IN_PROGRESS
+        }
+        if (this == COMPLETED) {
+            return false  // 已完成的任务不能改变状态
+        }
+        if (this == BLOCKED) {
+            return newStatus == TODO || newStatus == IN_PROGRESS
+        }
+        
+        return false
     }
 }

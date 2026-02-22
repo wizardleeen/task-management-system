@@ -1,6 +1,10 @@
 package service
 
-import domain.*
+import domain.User
+import domain.Task
+import domain.Project
+import domain.TaskStatus
+import domain.Priority
 
 @Bean
 class TaskService {
@@ -49,7 +53,7 @@ class TaskService {
         if (task == null) return null
         
         require(canEditTask(user, task!!), "没有权限更新任务状态")
-        require(task!!.status.canTransitionTo(newStatus), "无法从 ${task!!.status} 转换到 ${newStatus}")
+        require(task!!.status.canTransitionTo(newStatus), "无法从状态转换")
         
         task!!.updateStatus(newStatus)
         return task
@@ -118,7 +122,13 @@ class TaskService {
     
     fn getOverdueTasks() -> Task[] {
         val allTasks = Task.statusIdx.getAll(TaskStatus.IN_PROGRESS)
-        return allTasks.filter(t -> t.isOverdue())
+        val result = Task[0]
+        for (t in allTasks) {
+            if (t.isOverdue()) {
+                result = result + t
+            }
+        }
+        return result
     }
     
     fn getTasksDueSoon(days: int) -> Task[] {

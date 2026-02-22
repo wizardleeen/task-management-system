@@ -1,3 +1,13 @@
+import domain.*
+import domain.User
+import domain.Project
+import domain.Task
+import domain.UserRole
+import domain.ProjectStatus
+import domain.TaskStatus
+import domain.Priority
+import domain.ProjectRole
+
 @Bean
 class Init {
     {

@@ -12,11 +12,10 @@ enum Priority(val level: int, val label: string) {
     }
     
     fn getColor() -> string {
-        return when (this) {
-            LOW -> "green"
-            MEDIUM -> "yellow"
-            HIGH -> "orange"
-            URGENT -> "red"
-        }
+        if (this == LOW) return "green"
+        if (this == MEDIUM) return "yellow"
+        if (this == HIGH) return "orange"
+        if (this == URGENT) return "red"
+        return "gray"
     }
 }
