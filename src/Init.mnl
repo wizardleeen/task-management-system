@@ -1,4 +1,3 @@
-import domain.*
 import domain.User
 import domain.Project
 import domain.Task

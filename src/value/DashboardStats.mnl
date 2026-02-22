@@ -19,11 +19,19 @@ value class DashboardStats(
     
     fn getTaskCompletionRate() -> double {
         val total = getTotalTasks()
-        return if (total > 0) completedTasks * 100.0 / total else 0.0
+        if (total > 0) {
+            return completedTasks * 100.0 / total
+        } else {
+            return 0.0
+        }
     }
     
     fn getProjectCompletionRate() -> double {
         val total = getTotalProjects()
-        return if (total > 0) completedProjects * 100.0 / total else 0.0
+        if (total > 0) {
+            return completedProjects * 100.0 / total
+        } else {
+            return 0.0
+        }
     }
 }
