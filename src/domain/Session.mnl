@@ -1,0 +1,24 @@
+package domain
+
+class Session(
+    val user: User,
+    val token: string,
+    val createdAt: long,
+    var lastAccessAt: long
+) {
+    static val tokenIdx = Index<string, Session>(true, s -> s.token)
+    static val userIdx = Index<User, Session>(false, s -> s.user)
+    
+    fn isValid() -> bool {
+        val maxAge = 7 * 24 * 60 * 60 * 1000L  // 7天
+        return now() - lastAccessAt < maxAge
+    }
+    
+    fn updateAccess() {
+        lastAccessAt = now()
+    }
+    
+    fn isExpired() -> bool {
+        return !isValid()
+    }
+}

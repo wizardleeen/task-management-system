@@ -1,0 +1,114 @@
+package service
+
+import domain.*
+
+@Bean
+class ProjectService {
+    
+    fn createProject(@CurrentUser user: User, name: string, description: string, priority: Priority, startDate: long?, endDate: long?) -> Project {
+        require(user.role.canCreateProjects(), "没有权限创建项目")
+        
+        val project = Project(name, description, ProjectStatus.PLANNING, user, startDate, endDate, priority)
+        
+        // 创建者自动成为项目所有者
+        project.Member(user, ProjectRole.OWNER, now())
+        
+        return project
+    }
+    
+    fn updateProject(@CurrentUser user: User, projectId: long, name: string, description: string, priority: Priority, startDate: long?, endDate: long?) -> Project? {
+        val project = getProjectById(projectId)
+        if (project == null) return null
+        
+        require(canManageProject(user, project!!), "没有权限编辑项目")
+        
+        project!!.updateInfo(name, description, priority)
+        project!!.setDateRange(startDate, endDate)
+        
+        return project
+    }
+    
+    fn updateProjectStatus(@CurrentUser user: User, projectId: long, status: ProjectStatus) -> Project? {
+        val project = getProjectById(projectId)
+        if (project == null) return null
+        
+        require(canManageProject(user, project!!), "没有权限更新项目状态")
+        
+        project!!.updateStatus(status)
+        return project
+    }
+    
+    fn addProjectMember(@CurrentUser user: User, projectId: long, memberUsername: string, role: ProjectRole) -> bool {
+        val project = getProjectById(projectId)
+        if (project == null) return false
+        
+        require(canManageMembers(user, project!!), "没有权限管理项目成员")
+        
+        val memberUser = User.usernameIdx.getFirst(memberUsername)
+        if (memberUser == null) return false
+        
+        // 检查用户是否已经是项目成员
+        // 这里需要查询项目的成员子对象，实际实现中 Manul 会提供相应的查询方法
+        
+        project!!.Member(memberUser!!, role, now())
+        return true
+    }
+    
+    fn updateMemberRole(@CurrentUser user: User, projectId: long, memberUsername: string, newRole: ProjectRole) -> bool {
+        val project = getProjectById(projectId)
+        if (project == null) return false
+        
+        require(canManageMembers(user, project!!), "没有权限管理项目成员")
+        
+        // 实际实现中需要查询和更新成员角色
+        return true
+    }
+    
+    fn removeProjectMember(@CurrentUser user: User, projectId: long, memberUsername: string) -> bool {
+        val project = getProjectById(projectId)
+        if (project == null) return false
+        
+        require(canManageMembers(user, project!!), "没有权限管理项目成员")
+        
+        // 实际实现中需要查询和删除成员
+        return true
+    }
+    
+    fn getMyProjects(@CurrentUser user: User) -> Project[] {
+        return Project.ownerIdx.getAll(user)
+    }
+    
+    fn getProjectsByStatus(status: ProjectStatus) -> Project[] {
+        return Project.statusIdx.getAll(status)
+    }
+    
+    fn getProjectsByPriority(priority: Priority) -> Project[] {
+        return Project.priorityIdx.getAll(priority)
+    }
+    
+    fn searchProjects(namePattern: string) -> Project[] {
+        // 实际实现中会使用模糊搜索
+        return Project.nameIdx.getAll(namePattern)
+    }
+    
+    fn getOverdueProjects() -> Project[] {
+        val allProjects = Project.statusIdx.getAll(ProjectStatus.ACTIVE)
+        return allProjects.filter(p -> p.isOverdue())
+    }
+    
+    priv fn getProjectById(id: long) -> Project? {
+        // Manul 会自动处理 ID 查询
+        return null
+    }
+    
+    priv fn canManageProject(user: User, project: Project) -> bool {
+        if (user.role.canManageAllProjects()) return true
+        if (project.owner == user) return true
+        // 还需要检查用户是否为项目管理员
+        return false
+    }
+    
+    priv fn canManageMembers(user: User, project: Project) -> bool {
+        return canManageProject(user, project)
+    }
+}

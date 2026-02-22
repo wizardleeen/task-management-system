@@ -1,0 +1,32 @@
+package domain
+
+enum TaskStatus {
+    TODO,           // 待办
+    IN_PROGRESS,    // 进行中
+    IN_REVIEW,      // 审核中
+    TESTING,        // 测试中
+    COMPLETED,      // 已完成
+    BLOCKED         // 阻塞
+;
+    
+    fn isActive() -> bool {
+        return this == IN_PROGRESS || this == IN_REVIEW || this == TESTING
+    }
+    
+    fn isCompleted() -> bool {
+        return this == COMPLETED
+    }
+    
+    fn canTransitionTo(newStatus: TaskStatus) -> bool {
+        if (this == newStatus) return true
+        
+        return when (this) {
+            TODO -> newStatus == IN_PROGRESS || newStatus == BLOCKED
+            IN_PROGRESS -> newStatus == IN_REVIEW || newStatus == COMPLETED || newStatus == BLOCKED
+            IN_REVIEW -> newStatus == TESTING || newStatus == IN_PROGRESS || newStatus == COMPLETED
+            TESTING -> newStatus == COMPLETED || newStatus == IN_PROGRESS
+            COMPLETED -> false  // 已完成的任务不能改变状态
+            BLOCKED -> newStatus == TODO || newStatus == IN_PROGRESS
+        }
+    }
+}

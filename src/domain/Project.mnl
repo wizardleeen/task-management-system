@@ -1,0 +1,58 @@
+package domain
+
+class Project(
+    @Summary
+    var name: string,
+    var description: string,
+    @Summary
+    var status: ProjectStatus,
+    @Summary
+    val owner: User,
+    var startDate: long?,
+    var endDate: long?,
+    @Summary
+    var priority: Priority
+) {
+    @Summary
+    val createdAt = now()
+    var updatedAt = now()
+    
+    // 索引
+    static val ownerIdx = Index<User, Project>(false, p -> p.owner)
+    static val statusIdx = Index<ProjectStatus, Project>(false, p -> p.status)
+    static val priorityIdx = Index<Priority, Project>(false, p -> p.priority)
+    static val nameIdx = Index<string, Project>(false, p -> p.name)
+    
+    fn updateInfo(name: string, description: string, priority: Priority) {
+        this.name = name
+        this.description = description
+        this.priority = priority
+        this.updatedAt = now()
+    }
+    
+    fn updateStatus(newStatus: ProjectStatus) {
+        status = newStatus
+        updatedAt = now()
+    }
+    
+    fn setDateRange(startDate: long?, endDate: long?) {
+        this.startDate = startDate
+        this.endDate = endDate
+        updatedAt = now()
+    }
+    
+    fn isOverdue() -> bool {
+        return endDate != null && now() > endDate!! && status != ProjectStatus.COMPLETED
+    }
+    
+    // 项目成员 - 子类
+    class Member(
+        val user: User,
+        var role: ProjectRole,
+        val joinedAt: long
+    ) {
+        fn updateRole(newRole: ProjectRole) {
+            role = newRole
+        }
+    }
+}

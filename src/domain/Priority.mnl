@@ -1,0 +1,22 @@
+package domain
+
+enum Priority(val level: int, val label: string) {
+    LOW(1, "低优先级"),
+    MEDIUM(2, "中优先级"),
+    HIGH(3, "高优先级"),
+    URGENT(4, "紧急")
+;
+    
+    fn isHighPriority() -> bool {
+        return level >= 3
+    }
+    
+    fn getColor() -> string {
+        return when (this) {
+            LOW -> "green"
+            MEDIUM -> "yellow"
+            HIGH -> "orange"
+            URGENT -> "red"
+        }
+    }
+}

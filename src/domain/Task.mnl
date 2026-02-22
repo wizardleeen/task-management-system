@@ -1,0 +1,96 @@
+package domain
+
+import domain.Project.Member
+
+class Task(
+    @Summary
+    var title: string,
+    var description: string,
+    @Summary
+    val project: Project,
+    @Summary
+    var status: TaskStatus,
+    @Summary
+    var priority: Priority,
+    var assignee: User?,
+    @Summary
+    val creator: User,
+    var dueDate: long?,
+    var estimatedHours: double?
+) {
+    @Summary
+    val createdAt = now()
+    var updatedAt = now()
+    var completedAt: long?
+    var actualHours: double?
+    
+    // 索引
+    static val projectIdx = Index<Project, Task>(false, t -> t.project)
+    static val assigneeIdx = Index<User, Task>(false, t -> t.assignee)
+    static val statusIdx = Index<TaskStatus, Task>(false, t -> t.status)
+    static val priorityIdx = Index<Priority, Task>(false, t -> t.priority)
+    static val creatorIdx = Index<User, Task>(false, t -> t.creator)
+    static val dueDateIdx = Index<long, Task>(false, t -> t.dueDate)
+    
+    fn updateInfo(title: string, description: string, priority: Priority, dueDate: long?, estimatedHours: double?) {
+        this.title = title
+        this.description = description
+        this.priority = priority
+        this.dueDate = dueDate
+        this.estimatedHours = estimatedHours
+        this.updatedAt = now()
+    }
+    
+    fn assignTo(user: User?) {
+        assignee = user
+        updatedAt = now()
+    }
+    
+    fn updateStatus(newStatus: TaskStatus) {
+        val oldStatus = status
+        status = newStatus
+        updatedAt = now()
+        
+        if (newStatus == TaskStatus.COMPLETED && oldStatus != TaskStatus.COMPLETED) {
+            completedAt = now()
+        } else if (newStatus != TaskStatus.COMPLETED && oldStatus == TaskStatus.COMPLETED) {
+            completedAt = null
+        }
+    }
+    
+    fn logWorkHours(hours: double) {
+        actualHours = (actualHours ?: 0.0) + hours
+        updatedAt = now()
+    }
+    
+    fn isOverdue() -> bool {
+        return dueDate != null && now() > dueDate!! && status != TaskStatus.COMPLETED
+    }
+    
+    // 任务评论 - 子类
+    class Comment(
+        @Summary
+        val author: User,
+        var content: string,
+        @Summary
+        val createdAt: long
+    ) {
+        var updatedAt: long?
+        
+        fn updateContent(newContent: string) {
+            content = newContent
+            updatedAt = now()
+        }
+    }
+    
+    // 任务附件 - 子类
+    class Attachment(
+        @Summary
+        var filename: string,
+        val fileUrl: string,
+        val uploadedBy: User,
+        @Summary
+        val uploadedAt: long,
+        var fileSize: long
+    )
+}

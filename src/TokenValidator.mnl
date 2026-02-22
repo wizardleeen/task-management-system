@@ -1,0 +1,13 @@
+import domain.Session
+
+@Bean
+internal class TokenValidator: security.TokenValidator {
+    fn validate(token: string) -> any? {
+        val session = Session.tokenIdx.getFirst(token)
+        if (session != null && session!!.isValid()) {
+            session!!.updateAccess()
+            return session!!.user
+        }
+        return null
+    }
+}

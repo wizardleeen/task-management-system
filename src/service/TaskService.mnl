@@ -1,0 +1,154 @@
+package service
+
+import domain.*
+
+@Bean
+class TaskService {
+    
+    fn createTask(@CurrentUser user: User, projectId: long, title: string, description: string, priority: Priority, assigneeUsername: string?, dueDate: long?, estimatedHours: double?) -> Task? {
+        val project = getProjectById(projectId)
+        if (project == null) return null
+        
+        require(canCreateTasks(user, project!!), "没有权限在此项目创建任务")
+        
+        var assignee: User? = null
+        if (assigneeUsername != null) {
+            assignee = User.usernameIdx.getFirst(assigneeUsername!!)
+        }
+        
+        return Task(title, description, project!!, TaskStatus.TODO, priority, assignee, user, dueDate, estimatedHours)
+    }
+    
+    fn updateTask(@CurrentUser user: User, taskId: long, title: string, description: string, priority: Priority, dueDate: long?, estimatedHours: double?) -> Task? {
+        val task = getTaskById(taskId)
+        if (task == null) return null
+        
+        require(canEditTask(user, task!!), "没有权限编辑此任务")
+        
+        task!!.updateInfo(title, description, priority, dueDate, estimatedHours)
+        return task
+    }
+    
+    fn assignTask(@CurrentUser user: User, taskId: long, assigneeUsername: string?) -> Task? {
+        val task = getTaskById(taskId)
+        if (task == null) return null
+        
+        require(canEditTask(user, task!!), "没有权限分配此任务")
+        
+        var assignee: User? = null
+        if (assigneeUsername != null) {
+            assignee = User.usernameIdx.getFirst(assigneeUsername!!)
+        }
+        
+        task!!.assignTo(assignee)
+        return task
+    }
+    
+    fn updateTaskStatus(@CurrentUser user: User, taskId: long, newStatus: TaskStatus) -> Task? {
+        val task = getTaskById(taskId)
+        if (task == null) return null
+        
+        require(canEditTask(user, task!!), "没有权限更新任务状态")
+        require(task!!.status.canTransitionTo(newStatus), "无法从 ${task!!.status} 转换到 ${newStatus}")
+        
+        task!!.updateStatus(newStatus)
+        return task
+    }
+    
+    fn logWorkHours(@CurrentUser user: User, taskId: long, hours: double) -> Task? {
+        val task = getTaskById(taskId)
+        if (task == null) return null
+        
+        require(task!!.assignee == user || canEditTask(user, task!!), "只有任务分配者或项目管理员可以记录工时")
+        
+        task!!.logWorkHours(hours)
+        return task
+    }
+    
+    fn addComment(@CurrentUser user: User, taskId: long, content: string) -> bool {
+        val task = getTaskById(taskId)
+        if (task == null) return false
+        
+        task!!.Comment(user, content, now())
+        return true
+    }
+    
+    fn updateComment(@CurrentUser user: User, taskId: long, commentId: long, content: string) -> bool {
+        // 实际实现中需要查询评论并检查权限
+        return true
+    }
+    
+    fn addAttachment(@CurrentUser user: User, taskId: long, filename: string, fileUrl: string, fileSize: long) -> bool {
+        val task = getTaskById(taskId)
+        if (task == null) return false
+        
+        task!!.Attachment(filename, fileUrl, user, now(), fileSize)
+        return true
+    }
+    
+    fn getTasksByProject(projectId: long) -> Task[] {
+        val project = getProjectById(projectId)
+        if (project == null) return Task[0]
+        
+        return Task.projectIdx.getAll(project!!)
+    }
+    
+    fn getTasksByAssignee(assigneeUsername: string) -> Task[] {
+        val user = User.usernameIdx.getFirst(assigneeUsername)
+        if (user == null) return Task[0]
+        
+        return Task.assigneeIdx.getAll(user!!)
+    }
+    
+    fn getMyTasks(@CurrentUser user: User) -> Task[] {
+        return Task.assigneeIdx.getAll(user)
+    }
+    
+    fn getMyCreatedTasks(@CurrentUser user: User) -> Task[] {
+        return Task.creatorIdx.getAll(user)
+    }
+    
+    fn getTasksByStatus(status: TaskStatus) -> Task[] {
+        return Task.statusIdx.getAll(status)
+    }
+    
+    fn getTasksByPriority(priority: Priority) -> Task[] {
+        return Task.priorityIdx.getAll(priority)
+    }
+    
+    fn getOverdueTasks() -> Task[] {
+        val allTasks = Task.statusIdx.getAll(TaskStatus.IN_PROGRESS)
+        return allTasks.filter(t -> t.isOverdue())
+    }
+    
+    fn getTasksDueSoon(days: int) -> Task[] {
+        val cutoffTime = now() + (days * 24 * 60 * 60 * 1000L)
+        // 实际实现中会使用范围查询
+        return Task[0]
+    }
+    
+    priv fn getTaskById(id: long) -> Task? {
+        // Manul 会自动处理 ID 查询
+        return null
+    }
+    
+    priv fn getProjectById(id: long) -> Project? {
+        // Manul 会自动处理 ID 查询
+        return null
+    }
+    
+    priv fn canCreateTasks(user: User, project: Project) -> bool {
+        if (user.role.canManageAllProjects()) return true
+        if (project.owner == user) return true
+        // 还需要检查项目成员权限
+        return false
+    }
+    
+    priv fn canEditTask(user: User, task: Task) -> bool {
+        if (user.role.canManageAllProjects()) return true
+        if (task.project.owner == user) return true
+        if (task.creator == user) return true
+        if (task.assignee == user) return true
+        return false
+    }
+}

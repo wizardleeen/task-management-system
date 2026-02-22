@@ -1,0 +1,60 @@
+package service
+
+import domain.*
+
+@Bean
+class AuthService {
+    
+    fn login(username: string, password: string) -> Session? {
+        val user = User.usernameIdx.getFirst(username) ?: User.emailIdx.getFirst(username)
+        
+        if (user == null || !user!!.checkPassword(password) || !user!!.isActive) {
+            return null
+        }
+        
+        user!!.updateLastLogin()
+        
+        val token = uuid()
+        val session = Session(user!!, token, now(), now())
+        
+        return session
+    }
+    
+    fn logout(token: string) -> bool {
+        val session = Session.tokenIdx.getFirst(token)
+        if (session != null) {
+            delete session!!
+            return true
+        }
+        return false
+    }
+    
+    fn validateToken(token: string) -> User? {
+        val session = Session.tokenIdx.getFirst(token)
+        if (session != null && session!!.isValid()) {
+            session!!.updateAccess()
+            return session!!.user
+        }
+        return null
+    }
+    
+    fn changePassword(@CurrentUser user: User, oldPassword: string, newPassword: string) -> bool {
+        if (!user.checkPassword(oldPassword)) {
+            return false
+        }
+        
+        user.updatePassword(newPassword)
+        return true
+    }
+    
+    fn refreshToken(oldToken: string) -> Session? {
+        val session = Session.tokenIdx.getFirst(oldToken)
+        if (session != null && session!!.isValid()) {
+            delete session!!
+            val newToken = uuid()
+            val newSession = Session(session!!.user, newToken, now(), now())
+            return newSession
+        }
+        return null
+    }
+}

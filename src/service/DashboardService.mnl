@@ -1,0 +1,81 @@
+package service
+
+import domain.*
+
+@Bean
+class DashboardService {
+    
+    fn getDashboardStats(@CurrentUser user: User) -> DashboardStats {
+        val myTasks = Task.assigneeIdx.getAll(user)
+        val myProjects = Project.ownerIdx.getAll(user)
+        
+        val todoTasks = myTasks.filter(t -> t.status == TaskStatus.TODO).size
+        val inProgressTasks = myTasks.filter(t -> t.status == TaskStatus.IN_PROGRESS).size
+        val completedTasks = myTasks.filter(t -> t.status == TaskStatus.COMPLETED).size
+        val overdueTasks = myTasks.filter(t -> t.isOverdue()).size
+        
+        val activeProjects = myProjects.filter(p -> p.status.isActive()).size
+        val completedProjects = myProjects.filter(p -> p.status == ProjectStatus.COMPLETED).size
+        
+        return DashboardStats(
+            todoTasks, inProgressTasks, completedTasks, overdueTasks,
+            activeProjects, completedProjects
+        )
+    }
+    
+    fn getRecentTasks(@CurrentUser user: User, limit: int) -> Task[] {
+        val myTasks = Task.assigneeIdx.getAll(user)
+        // 实际实现中会按创建时间排序并限制数量
+        return myTasks
+    }
+    
+    fn getUpcomingTasks(@CurrentUser user: User, days: int) -> Task[] {
+        val myTasks = Task.assigneeIdx.getAll(user)
+        val cutoffTime = now() + (days * 24 * 60 * 60 * 1000L)
+        
+        return myTasks.filter(t -> 
+            t.dueDate != null && 
+            t.dueDate!! <= cutoffTime && 
+            !t.status.isCompleted()
+        )
+    }
+    
+    fn getProjectProgress(projectId: long) -> ProjectProgress? {
+        val project = getProjectById(projectId)
+        if (project == null) return null
+        
+        val tasks = Task.projectIdx.getAll(project!!)
+        val totalTasks = tasks.size
+        val completedTasks = tasks.filter(t -> t.status.isCompleted()).size
+        val inProgressTasks = tasks.filter(t -> t.status.isActive()).size
+        val todoTasks = tasks.filter(t -> t.status == TaskStatus.TODO).size
+        
+        val progressPercentage = if (totalTasks > 0) (completedTasks * 100 / totalTasks) else 0
+        
+        return ProjectProgress(
+            project!!,
+            totalTasks, completedTasks, inProgressTasks, todoTasks,
+            progressPercentage
+        )
+    }
+    
+    fn getTeamStats(@CurrentUser user: User) -> TeamStats? {
+        require(user.role == UserRole.ADMIN || user.role == UserRole.MANAGER, "没有权限查看团队统计")
+        
+        val allUsers = User.activeIdx.getAll(true)
+        val allProjects = Project.statusIdx.getAll(ProjectStatus.ACTIVE)
+        val allTasks = Task.statusIdx.getAll(TaskStatus.IN_PROGRESS)
+        
+        return TeamStats(
+            allUsers.size,
+            allProjects.size,
+            allTasks.size,
+            Task.statusIdx.getAll(TaskStatus.COMPLETED).size
+        )
+    }
+    
+    priv fn getProjectById(id: long) -> Project? {
+        // Manul 会自动处理 ID 查询
+        return null
+    }
+}

@@ -1,0 +1,26 @@
+package value
+
+value class TeamStats(
+    val totalUsers: int,
+    val activeProjects: int,
+    val activeTasks: int,
+    val completedTasks: int
+) {
+    
+    fn getTotalTasks() -> int {
+        return activeTasks + completedTasks
+    }
+    
+    fn getTaskCompletionRate() -> double {
+        val total = getTotalTasks()
+        return if (total > 0) completedTasks * 100.0 / total else 0.0
+    }
+    
+    fn getAverageTasksPerUser() -> double {
+        return if (totalUsers > 0) getTotalTasks().toDouble() / totalUsers else 0.0
+    }
+    
+    fn getAverageProjectsPerUser() -> double {
+        return if (totalUsers > 0) activeProjects.toDouble() / totalUsers else 0.0
+    }
+}

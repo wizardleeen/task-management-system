@@ -1,0 +1,80 @@
+package service
+
+import domain.*
+
+@Bean
+class UserService {
+    
+    fn createUser(username: string, email: string, displayName: string, password: string, role: UserRole) -> User? {
+        // 检查用户名和邮箱是否已存在
+        if (User.usernameIdx.getFirst(username) != null) {
+            return null  // 用户名已存在
+        }
+        
+        if (User.emailIdx.getFirst(email) != null) {
+            return null  // 邮箱已存在
+        }
+        
+        return User(username, email, displayName, password, null, role, true)
+    }
+    
+    fn updateProfile(@CurrentUser currentUser: User, displayName: string, avatar: string?) -> User {
+        currentUser.displayName = displayName
+        currentUser.avatar = avatar
+        return currentUser
+    }
+    
+    fn getUserById(id: long) -> User? {
+        // Manul 会自动处理 ID 查询
+        return null  // 实际实现中会根据 ID 查询
+    }
+    
+    fn getUserByUsername(username: string) -> User? {
+        return User.usernameIdx.getFirst(username)
+    }
+    
+    fn getUserByEmail(email: string) -> User? {
+        return User.emailIdx.getFirst(email)
+    }
+    
+    fn getAllUsers() -> User[] {
+        return User.activeIdx.getAll(true)
+    }
+    
+    fn getUsersByRole(role: UserRole) -> User[] {
+        return User.roleIdx.getAll(role)
+    }
+    
+    fn deactivateUser(@CurrentUser currentUser: User, targetUsername: string) -> bool {
+        require(currentUser.role.canManageUsers(), "没有权限管理用户")
+        
+        val targetUser = User.usernameIdx.getFirst(targetUsername)
+        if (targetUser != null) {
+            targetUser!!.deactivate()
+            return true
+        }
+        return false
+    }
+    
+    fn activateUser(@CurrentUser currentUser: User, targetUsername: string) -> bool {
+        require(currentUser.role.canManageUsers(), "没有权限管理用户")
+        
+        val targetUser = User.usernameIdx.getFirst(targetUsername)
+        if (targetUser != null) {
+            targetUser!!.activate()
+            return true
+        }
+        return false
+    }
+    
+    fn updateUserRole(@CurrentUser currentUser: User, targetUsername: string, newRole: UserRole) -> bool {
+        require(currentUser.role.canManageUsers(), "没有权限管理用户")
+        
+        val targetUser = User.usernameIdx.getFirst(targetUsername)
+        if (targetUser != null) {
+            targetUser!!.role = newRole
+            return true
+        }
+        return false
+    }
+}

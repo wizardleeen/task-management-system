@@ -1,0 +1,49 @@
+@Bean
+class Init {
+    {
+        // 创建默认管理员用户
+        val admin = User("admin", "admin@example.com", "系统管理员", "admin123", null, UserRole.ADMIN, true)
+        
+        // 创建测试用户
+        val manager = User("manager", "manager@example.com", "项目经理", "manager123", null, UserRole.MANAGER, true)
+        val developer1 = User("dev1", "dev1@example.com", "开发者1", "dev123", null, UserRole.DEVELOPER, true)
+        val developer2 = User("dev2", "dev2@example.com", "开发者2", "dev123", null, UserRole.DEVELOPER, true)
+        val tester = User("tester", "tester@example.com", "测试员", "test123", null, UserRole.TESTER, true)
+        
+        // 创建示例项目
+        val project1 = Project("任务管理系统", "一个功能完整的任务管理平台", ProjectStatus.ACTIVE, manager, now(), now() + 30L * 24 * 60 * 60 * 1000, Priority.HIGH)
+        val project2 = Project("移动应用开发", "开发公司移动端应用", ProjectStatus.PLANNING, manager, now(), now() + 60L * 24 * 60 * 60 * 1000, Priority.MEDIUM)
+        
+        // 添加项目成员
+        project1.Member(manager, ProjectRole.OWNER, now())
+        project1.Member(developer1, ProjectRole.MEMBER, now())
+        project1.Member(developer2, ProjectRole.MEMBER, now())
+        project1.Member(tester, ProjectRole.MEMBER, now())
+        
+        project2.Member(manager, ProjectRole.OWNER, now())
+        project2.Member(developer1, ProjectRole.ADMIN, now())
+        
+        // 创建示例任务
+        val task1 = Task("用户认证功能", "实现用户登录、注册、密码重置功能", project1, TaskStatus.COMPLETED, Priority.HIGH, developer1, manager, now() + 7L * 24 * 60 * 60 * 1000, 16.0)
+        task1.actualHours = 14.5
+        task1.completedAt = now() - 2L * 24 * 60 * 60 * 1000
+        
+        val task2 = Task("项目管理界面", "开发项目创建、编辑、管理界面", project1, TaskStatus.IN_PROGRESS, Priority.HIGH, developer2, manager, now() + 10L * 24 * 60 * 60 * 1000, 20.0)
+        task2.actualHours = 8.0
+        
+        val task3 = Task("任务分配功能", "实现任务创建、分配、状态更新功能", project1, TaskStatus.TODO, Priority.MEDIUM, developer1, manager, now() + 14L * 24 * 60 * 60 * 1000, 12.0)
+        
+        val task4 = Task("系统测试", "对整个系统进行功能测试和性能测试", project1, TaskStatus.TODO, Priority.MEDIUM, tester, manager, now() + 20L * 24 * 60 * 60 * 1000, 24.0)
+        
+        val task5 = Task("需求分析", "分析移动应用的功能需求和技术需求", project2, TaskStatus.IN_PROGRESS, Priority.HIGH, developer1, manager, now() + 5L * 24 * 60 * 60 * 1000, 8.0)
+        
+        // 添加任务评论
+        task1.Comment(developer1, "认证功能已经完成，包括JWT token和session管理", now() - 1L * 24 * 60 * 60 * 1000)
+        task1.Comment(manager, "很好，请准备code review", now() - 12L * 60 * 60 * 1000)
+        
+        task2.Comment(developer2, "界面设计已完成，正在实现后端接口", now() - 6L * 60 * 60 * 1000)
+        task2.Comment(manager, "注意保持界面的响应式设计", now() - 2L * 60 * 60 * 1000)
+        
+        task5.Comment(developer1, "已完成用户故事梳理，正在进行技术调研", now() - 3L * 60 * 60 * 1000)
+    }
+}

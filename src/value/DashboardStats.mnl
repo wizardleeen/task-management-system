@@ -1,0 +1,29 @@
+package value
+
+value class DashboardStats(
+    val todoTasks: int,
+    val inProgressTasks: int,
+    val completedTasks: int,
+    val overdueTasks: int,
+    val activeProjects: int,
+    val completedProjects: int
+) {
+    
+    fn getTotalTasks() -> int {
+        return todoTasks + inProgressTasks + completedTasks
+    }
+    
+    fn getTotalProjects() -> int {
+        return activeProjects + completedProjects
+    }
+    
+    fn getTaskCompletionRate() -> double {
+        val total = getTotalTasks()
+        return if (total > 0) completedTasks * 100.0 / total else 0.0
+    }
+    
+    fn getProjectCompletionRate() -> double {
+        val total = getTotalProjects()
+        return if (total > 0) completedProjects * 100.0 / total else 0.0
+    }
+}

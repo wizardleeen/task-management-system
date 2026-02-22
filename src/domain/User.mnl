@@ -1,0 +1,47 @@
+package domain
+
+class User(
+    @Summary
+    val username: string,
+    @Summary
+    val email: string,
+    @Summary
+    var displayName: string,
+    password: string,
+    var avatar: string?,
+    @Summary
+    var role: UserRole,
+    @Summary
+    var isActive: bool
+) {
+    priv var passwordHash = secureHash(password, null)
+    @Summary
+    var createdAt = now()
+    var lastLoginAt: long?
+    
+    // 索引
+    static val usernameIdx = Index<string, User>(true, u -> u.username)
+    static val emailIdx = Index<string, User>(true, u -> u.email)
+    static val roleIdx = Index<UserRole, User>(false, u -> u.role)
+    static val activeIdx = Index<bool, User>(false, u -> u.isActive)
+    
+    fn checkPassword(password: string) -> bool {
+        return passwordHash == secureHash(password, null)
+    }
+    
+    fn updatePassword(newPassword: string) {
+        passwordHash = secureHash(newPassword, null)
+    }
+    
+    fn updateLastLogin() {
+        lastLoginAt = now()
+    }
+    
+    fn deactivate() {
+        isActive = false
+    }
+    
+    fn activate() {
+        isActive = true
+    }
+}

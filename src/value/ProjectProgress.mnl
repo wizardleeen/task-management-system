@@ -1,0 +1,25 @@
+package value
+
+import domain.Project
+
+value class ProjectProgress(
+    val project: Project,
+    val totalTasks: int,
+    val completedTasks: int,
+    val inProgressTasks: int,
+    val todoTasks: int,
+    val progressPercentage: int
+) {
+    
+    fn isOnTrack() -> bool {
+        return progressPercentage >= 70 || project.endDate == null
+    }
+    
+    fn getRemainingTasks() -> int {
+        return totalTasks - completedTasks
+    }
+    
+    fn getActiveTasksCount() -> int {
+        return inProgressTasks + todoTasks
+    }
+}

@@ -1,0 +1,25 @@
+package domain
+
+enum ProjectRole {
+    OWNER,      // 项目所有者
+    ADMIN,      // 项目管理员
+    MEMBER,     // 项目成员
+    VIEWER      // 只读成员
+;
+    
+    fn canManageProject() -> bool {
+        return this == OWNER || this == ADMIN
+    }
+    
+    fn canManageMembers() -> bool {
+        return this == OWNER || this == ADMIN
+    }
+    
+    fn canCreateTasks() -> bool {
+        return this == OWNER || this == ADMIN || this == MEMBER
+    }
+    
+    fn canEditTasks() -> bool {
+        return this == OWNER || this == ADMIN || this == MEMBER
+    }
+}
